@@ -6,7 +6,7 @@ Hello!
 Thank you for considering joining our team! 
 
 
-We're a hosting company that offers cloud-based WordPress hosting services. As an SRE, you'll play an important role in alert handling, improving our monitoring system, incident response processes, and system stability, as well as optimizing performance. 
+Being part of big Namecheap family, Cloud team develops, maintains and supports different services, such as cloud-based WordPress hosting, CDN. As an SRE, you'll play an important role in alert handling, improving our monitoring system, incident response processes, and system stability, as well as optimizing performance. 
 
 ## Rules
 
