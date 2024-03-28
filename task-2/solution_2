@@ -1,0 +1,42 @@
+1. Firstly, I install minikube (for that Docker desktop should be already installed) from https://minikube.sigs.k8s.io/docs/start/. To start the cluster I run 'minikube start'.
+After that I can access it with such a command 'minikube kubectl -- get po -A'. 
+2. Then, I continue with deployment of the app. For that, I run 'kubectl apply -f https://raw.githubusercontent.com/Maisia/SRE_Challenge/main/task-2/nginx.yaml '. Another way
+to start deployment would be to simply upload 'nginx.yaml' to my PC and run 'kubectl create -f nginx.yaml'. The output looked like this:
+deployment.apps/sretest created
+service/sretest-service created 
+
+3. After that I tried running 'kubectl get services sretest-service' to check the service details and that it got installed properly and received such results:
+NAME              TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+sretest-service   NodePort   10.102.205.63   <none>        80:32477/TCP   37m
+
+4. And now the debugging part starts. When trying to access the service in web browser using command 'minikube service sretest-service', I faced an error 
+'Exiting due to SVC_UNREACHABLE: service not available: no running pod for service sretest-service found'.
+By checking thoroughly the nginx.yaml file and investigating the issue with the help of Google, I found out that the values for spec:containers:name: for the Deployment part and for spec:selector:app:
+for the Sevice one should be the same. And in our case, the one for spec:containers:name: for the Deployment part was 'sretest' and the other for spec:selector:app: for the Service was
+'sretest-service', which can cause the mentioned above error. So, I corrected the values for the Service part and renamed them to 'sretest' as well and applied changes by running 
+'kubectl apply -f nginx.yaml'. But when trying access the service, it failed again.
+
+5. I tried then further investigation and used 'kubectl get pods' command. The output was as follows: 
+NAME                      READY   STATUS    RESTARTS   AGE
+sretest-98b9bddd7-5wt8p   0/1     Pending   0          82m
+
+After that, I tried checking more details regarding the pod with 'kubectl describe pod sretest-98b9bddd7-5wt8p'. And in the output I noticed the following:
+Events:
+  Type     Reason            Age                   From               Message
+  ----     ------            ----                  ----               -------
+  Warning  FailedScheduling  2m40s (x18 over 87m)  default-scheduler  0/1 nodes are available: 1 node(s) didn't match Pod's node affinity/selector. preemption: 0/1 nodes are available: 
+1 Preemption is not helpful for scheduling..
+
+And in the nginx.yaml file I noticed part of the code related to node affinity:
+affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/application
+                operator: In
+                values:
+                - "sretest"
+
+I tried removing these lines from the file and again ran 'kubectl apply -f nginx.yaml', then 'minikube service sretest'. 
+And voila, the Nginx default page opened in my browser successfully.

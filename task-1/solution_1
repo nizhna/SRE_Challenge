@@ -1,0 +1,46 @@
+You have a sample of webserver access logs in access.log file. Get the following information:
+
+1. top 5 IP addresses requests come from;
+2. number of requests with '500' and '200' HTTP codes;
+3. number of requests per minute;
+4. which domain is the most requested one?
+5. do all the requests to '/page.php' result in '499' code?
+Based on log and gathered data, can you outline any anomalies that should be taken into attention?
+
+My solutions:
+1. Command: awk '{ print $3 }' access.log | sort | uniq -c | sort -rn | head -5
+   Result:
+   1184 98.126.83.64
+      1 99.90.171.165
+      1 99.9.195.153
+      1 99.81.223.86
+      1 99.4.242.220
+
+2. Command: awk '{ print $4 }' access.log | grep -E '500|200' | wc -l
+   Result: 1849
+
+3. Command: output=$(awk '{ print $2 }' access.log |cut -d : -f1,2 | sort | uniq -c); echo "$output"; num_sum=$( echo "$output" |
+awk '{ i+=$1 } END { print i }' ); minut_sum=$(echo "$output" | wc -l); echo "Average per minute: "; echo " $num_sum / $minut_sum " | bc
+   Result: 
+    802 15:00
+    801 15:01
+    778 15:02
+    800 15:03
+    808 15:04
+     11 15:05
+Average per minute:
+666
+
+The command above displays a number of requests for each minute listed in the log, and then displays an average number of requests per minute.
+
+4. Command: awk '{ print $5 }' access.log | sort | uniq -c | sort -rn | head -1 | awk '{ print $2 }' 
+   Result: example2.com
+
+5. Command: if [[ $(grep page.php access.log | grep 499 | wc -l) == $(grep page.php access.log | wc -l) ]]; then echo "Yes"; fi
+   Result: Yes
+
+A huge number of the requests from IP 98.126.83.64 may indicate DOS on the websites. Also, the load was mostly present between 15:00 and 15:05, after that it was lowered. 
+In addition, the fact all requests to example4.com/page.php result in 499 error suggests that there may be some proxy misconfiguration or issue with this particular host. 
+For example, it may be an issue with Haproxy or other proxy service like AWS Load Balancer.
+
+
